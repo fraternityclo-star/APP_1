@@ -1,1 +1,522 @@
-Test
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Snake Deluxe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #0f1220;
+      --panel: #171a2e;
+      --accent: #5eead4;
+      --accent-2: #60a5fa;
+      --danger: #f87171;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+    }
+
+    * { box-sizing: border-box; font-family: "Segoe UI", Roboto, sans-serif; }
+
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 50% -10%, #1f2350, var(--bg));
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app {
+      width: 980px;
+      max-width: 100%;
+      background: linear-gradient(180deg, #1a1e3a, var(--panel));
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: #0c0f24;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      border-right: 1px solid rgba(255,255,255,.05);
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--accent);
+    }
+
+    .menu button {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: #14183a;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all .2s ease;
+    }
+
+    .menu button:hover {
+      background: #1b2060;
+      transform: translateY(-1px);
+    }
+
+    .menu button.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #020617;
+      font-weight: 600;
+    }
+
+    .stats {
+      margin-top: auto;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .stats div { margin-bottom: 6px; }
+
+    /* Main */
+    .main {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,.04);
+      border-radius: 12px;
+      padding: 12px 16px;
+    }
+
+    .hud {
+      display: flex;
+      gap: 20px;
+      font-size: 14px;
+    }
+
+    .hud span {
+      color: var(--muted);
+    }
+
+    .hud strong {
+      color: var(--text);
+    }
+
+    .xp-bar {
+      width: 220px;
+      height: 10px;
+      background: #0b0e22;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+
+    .xp-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .2s linear;
+    }
+
+    .game-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(500px 300px at 50% 20%, #1a1f55, #0a0d24);
+      border-radius: 16px;
+      position: relative;
+    }
+
+    canvas {
+      background: #020617;
+      border-radius: 12px;
+      border: 2px solid rgba(255,255,255,.08);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2,6,23,.7);
+      backdrop-filter: blur(4px);
+    }
+
+    .overlay.active { display: flex; }
+
+    .modal {
+      background: #0b0f2a;
+      border-radius: 16px;
+      padding: 28px;
+      width: 360px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .modal h2 { margin-top: 0; color: var(--accent); }
+
+    .modal button {
+      margin-top: 16px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #020617;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .shop-item {
+      background: #0e1233;
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .shop-item button {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: #1f2937;
+      color: var(--text);
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">SNAKE DELUXE</div>
+      <div class="menu">
+        <button class="primary" onclick="startGame()">▶ Spielen</button>
+        <button onclick="openShop()">🛒 Shop</button>
+        <button onclick="showHelp()">❓ Hilfe</button>
+      </div>
+      <div class="stats">
+        <div>Version: 1.0</div>
+        <div>Single‑File HTML Demo</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="hud">
+          <div>Level <strong id="level">1</strong></div>
+          <div>XP <strong id="xpText">0 / 100</strong></div>
+          <div>Coins <strong id="coins">0</strong> 🪙</div>
+        </div>
+        <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
+      </div>
+
+      <div class="game-wrapper">
+        <canvas id="game" width="480" height="480"></canvas>
+
+        <div class="overlay" id="overlay">
+          <div class="modal" id="modalContent"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+/**********************
+ * SNAKE DELUXE PRO
+ * Erweiterte Version
+ * - Besseres Rendering
+ * - Map-Hintergrund (Grid + Glow)
+ * - Upgrade-System
+ * - Professionellere Struktur
+ **********************/
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+/* =====================
+   CONFIG / STATE
+===================== */
+const GRID = 20;
+const TILES = canvas.width / GRID;
+
+let gameLoop = null;
+let running = false;
+
+let state = {
+  snake: [],
+  food: null,
+  dx: 1,
+  dy: 0,
+  score: 0,
+  coins: 0,
+  level: 1,
+  xp: 0,
+  xpNext: 100,
+  speed: 120,
+  upgrades: {
+    speed: 0,
+    magnet: 0,
+    xpBoost: 0
+  }
+};
+
+/* =====================
+   GAME SETUP
+===================== */
+function resetGame() {
+  state.snake = [
+    { x: 10, y: 10 },
+    { x: 9, y: 10 },
+    { x: 8, y: 10 }
+  ];
+  state.dx = 1;
+  state.dy = 0;
+  state.score = 0;
+  state.food = spawnFood();
+}
+
+function spawnFood() {
+  return {
+    x: Math.floor(Math.random() * TILES),
+    y: Math.floor(Math.random() * TILES)
+  };
+}
+
+function startGame() {
+  closeOverlay();
+  resetGame();
+  running = true;
+  clearInterval(gameLoop);
+  gameLoop = setInterval(update, state.speed);
+}
+
+/* =====================
+   PROGRESSION
+===================== */
+function gainXP(amount) {
+  amount = Math.floor(amount * (1 + state.upgrades.xpBoost * 0.25));
+  state.xp += amount;
+
+  if (state.xp >= state.xpNext) {
+    state.xp -= state.xpNext;
+    state.level++;
+    state.xpNext = Math.floor(state.xpNext * 1.3);
+    state.speed = Math.max(60, state.speed - 8);
+    restartLoop();
+  }
+  updateHUD();
+}
+
+function restartLoop() {
+  clearInterval(gameLoop);
+  gameLoop = setInterval(update, state.speed);
+}
+
+/* =====================
+   UPDATE LOOP
+===================== */
+function update() {
+  if (!running) return;
+
+  const head = {
+    x: state.snake[0].x + state.dx,
+    y: state.snake[0].y + state.dy
+  };
+
+  // Collision
+  if (
+    head.x < 0 || head.y < 0 ||
+    head.x >= TILES || head.y >= TILES ||
+    state.snake.some(s => s.x === head.x && s.y === head.y)
+  ) {
+    return gameOver();
+  }
+
+  state.snake.unshift(head);
+
+  // Food
+  if (head.x === state.food.x && head.y === state.food.y) {
+    state.score++;
+    state.coins++;
+    gainXP(10);
+    state.food = spawnFood();
+  } else {
+    state.snake.pop();
+  }
+
+  draw();
+}
+
+/* =====================
+   RENDERING
+===================== */
+function drawBackground() {
+  ctx.fillStyle = '#020617';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  for (let i = 0; i < TILES; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * GRID, 0);
+    ctx.lineTo(i * GRID, canvas.height);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(0, i * GRID);
+    ctx.lineTo(canvas.width, i * GRID);
+    ctx.stroke();
+  }
+}
+
+function drawSnake() {
+  state.snake.forEach((seg, i) => {
+    const g = ctx.createLinearGradient(
+      seg.x * GRID,
+      seg.y * GRID,
+      seg.x * GRID + GRID,
+      seg.y * GRID + GRID
+    );
+    g.addColorStop(0, '#60a5fa');
+    g.addColorStop(1, '#5eead4');
+
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.roundRect(seg.x * GRID, seg.y * GRID, GRID - 1, GRID - 1, 6);
+    ctx.fill();
+  });
+}
+
+function drawFood() {
+  ctx.fillStyle = '#facc15';
+  ctx.shadowColor = '#facc15';
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.arc(
+    state.food.x * GRID + GRID / 2,
+    state.food.y * GRID + GRID / 2,
+    GRID / 2.5,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+  ctx.shadowBlur = 0;
+}
+
+function draw() {
+  drawBackground();
+  drawFood();
+  drawSnake();
+}
+
+/* =====================
+   GAME OVER
+===================== */
+function gameOver() {
+  running = false;
+  clearInterval(gameLoop);
+
+  showModal(`
+    <h2>Game Over</h2>
+    <p>Score: <strong>${state.score}</strong></p>
+    <p>Coins erhalten: <strong>${state.score}</strong></p>
+    <button onclick="startGame()">Nochmal spielen</button>
+  `);
+
+  updateHUD();
+}
+
+/* =====================
+   UPGRADES / SHOP
+===================== */
+function openShop() {
+  showModal(`
+    <h2>Upgrades</h2>
+    <div class="shop-item">Speed Upgrade (Lvl ${state.upgrades.speed}) <span>75 🪙</span> <button onclick="buyUpgrade('speed')">Kaufen</button></div>
+    <div class="shop-item">XP Boost (Lvl ${state.upgrades.xpBoost}) <span>60 🪙</span> <button onclick="buyUpgrade('xpBoost')">Kaufen</button></div>
+    <button onclick="closeOverlay()">Schließen</button>
+  `);
+}
+
+function buyUpgrade(type) {
+  const prices = { speed: 75, xpBoost: 60 };
+  if (state.coins < prices[type]) return;
+
+  state.coins -= prices[type];
+  state.upgrades[type]++;
+
+  if (type === 'speed') {
+    state.speed = Math.max(50, state.speed - 10);
+    restartLoop();
+  }
+
+  updateHUD();
+  openShop();
+}
+
+/* =====================
+   UI
+===================== */
+function updateHUD() {
+  document.getElementById('level').textContent = state.level;
+  document.getElementById('coins').textContent = state.coins;
+  document.getElementById('xpText').textContent = `${state.xp} / ${state.xpNext}`;
+  document.getElementById('xpFill').style.width = `${(state.xp / state.xpNext) * 100}%`;
+}
+
+function showModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('overlay').classList.add('active');
+}
+
+function closeOverlay() {
+  document.getElementById('overlay').classList.remove('active');
+}
+
+function showHelp() {
+  showModal(`
+    <h2>Steuerung</h2>
+    <p>WASD oder Pfeiltasten</p>
+    <p>Upgrades verbessern dein Spiel dauerhaft.</p>
+    <button onclick="closeOverlay()">OK</button>
+  `);
+}
+
+/* =====================
+   INPUT
+===================== */
+document.addEventListener('keydown', e => {
+  switch (e.key) {
+    case 'ArrowUp': case 'w': if (state.dy === 0) { state.dx = 0; state.dy = -1; } break;
+    case 'ArrowDown': case 's': if (state.dy === 0) { state.dx = 0; state.dy = 1; } break;
+    case 'ArrowLeft': case 'a': if (state.dx === 0) { state.dx = -1; state.dy = 0; } break;
+    case 'ArrowRight': case 'd': if (state.dx === 0) { state.dx = 1; state.dy = 0; } break;
+  }
+});
+
+updateHUD();
+</script>
+</body>
+</html>
